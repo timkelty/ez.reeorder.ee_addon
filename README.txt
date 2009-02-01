@@ -20,12 +20,12 @@ ABOUT THIS MODULE:
 
 The REEOrder module allows you to easily re-order your entries.
 
-The module uses EE’s ability to order Weblog Entries by a Custom Field, it does not add any queries or other additional processing to your templates.
+The module uses EE's ability to order Weblog Entries by a Custom Field, it does not add any queries or other additional processing to your templates.
 
 Installation and usage:
 
 Step 1:
-Create a new Custom Field in your Field Group, this field will hold the sorting value. You aren’t actually going to use this field. The REEOrder Module will do all the heavy lifting. (The actual sorting.)
+Create a new Custom Field in your Field Group, this field will hold the sorting value. You aren't actually going to use this field. The REEOrder Module will do all the heavy lifting. (The actual sorting.)
 - The preferred "Field Type" would be "Text Input"
 - Name it anything you like, and feel free to set any other options
 
