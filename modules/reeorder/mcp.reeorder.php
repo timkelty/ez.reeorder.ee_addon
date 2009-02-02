@@ -270,12 +270,23 @@ class Reeorder_CP {
 	
 	function list_entries($msg='')
 	{
+		//print_r(get_defined_constants()); exit();
 		global $FNS, $IN, $DB, $DSP, $LANG, $PREFS, $SESS;
+
+		// Import the JS
+		if ($js = $DSP->file_open(PATH.'modules/reeorder/jquery.tablednd.js'))
+		{
+			$DSP->initial_body .= '<script type="text/javascript">'
+			                    . NL.$js.NL
+			                    . '</script>'
+			                    . '<style type="text/css">'
+			                    . '.sort-handle { cursor:move; }'
+			                    . '</style>';
+		}
 		
 		// -------------------------------------------------------
 		//	HTML Title and Navigation Crumblinks
 		// -------------------------------------------------------
-		
 		$DSP->title = $LANG->line('ttl_reeorder');
 		
 		$DSP->crumb = $LANG->line('crumb_reeorder');
@@ -306,7 +317,7 @@ class Reeorder_CP {
 		//	Table and Table Headers
 		// -------------------------------------------------------
 		
-		$DSP->body .= $DSP->table_open(array('class' => 'tableBorder', 'width' => '100%'));
+		$DSP->body .= $DSP->table_open(array('class' => 'tableBorder', 'width' => '100%', 'id' => 'entries'));
 		
 		$DSP->body .= $DSP->table_row(array(
 											// array(
@@ -376,10 +387,15 @@ class Reeorder_CP {
 													'class' => $style,
 													'width' => '1%;padding:0 13px 0 8px'
 													 ),
+												//array(
+												//	'text'  => $DSP->qspan('defaultBold', $DSP->anchor(BASE.AMP.'C=modules'.AMP.'M=reeorder'.AMP.'P=change_order'.AMP.'weblog_id='.$weblog_id.AMP.'entry_id='.$row['entry_id'].AMP.'order=up', '<img src="'.PATH_CP_IMG.'arrow_up.gif" border="0"  width="16" height="16" alt="" title="" />').'&nbsp;'.$DSP->anchor(BASE.AMP.'C=modules'.AMP.'M=reeorder'.AMP.'P=change_order'.AMP.'weblog_id='.$weblog_id.AMP.'entry_id='.$row['entry_id'].AMP.'order=down', '<img src="'.PATH_CP_IMG.'arrow_down.gif" border="0"  width="16" height="16" alt="" title="" />')),
+												//	'class' => $style,
+												//	'width' => '40px;padding-right:8px'
+												//	 ),
 												array(
-													'text'  => $DSP->qspan('defaultBold', $DSP->anchor(BASE.AMP.'C=modules'.AMP.'M=reeorder'.AMP.'P=change_order'.AMP.'weblog_id='.$weblog_id.AMP.'entry_id='.$row['entry_id'].AMP.'order=up', '<img src="'.PATH_CP_IMG.'arrow_up.gif" border="0"  width="16" height="16" alt="" title="" />').'&nbsp;'.$DSP->anchor(BASE.AMP.'C=modules'.AMP.'M=reeorder'.AMP.'P=change_order'.AMP.'weblog_id='.$weblog_id.AMP.'entry_id='.$row['entry_id'].AMP.'order=down', '<img src="'.PATH_CP_IMG.'arrow_down.gif" border="0"  width="16" height="16" alt="" title="" />')),
-													'class' => $style,
-													'width' => '40px;padding-right:8px'
+													'text'  => $DSP->qspan('defaultBold', '<img src="'.PATH_CP_IMG.'sort.png" border="0"  width="16" height="16" alt="" title="" />'),
+													'class' => $style.' sort-handle',
+													'width' => '20px;padding-right:8px'
 													 ),
 												array(
 													'text'  => $DSP->qspan('defaultBold', $row['title']),
@@ -395,7 +411,6 @@ class Reeorder_CP {
 		
 		$DSP->body .= $DSP->table_close();
 		$DSP->body .= $DSP->qdiv('box default', $LANG->line('link_documentation'));
-		
 	}
 	// END
 	
