@@ -377,21 +377,11 @@ class Reeorder_CP {
 			$style = ($i++ % 2) ? 'tableCellOne' : 'tableCellTwo';
 			
 			$DSP->body .= $DSP->table_row(array(
-												// array(
-												// 	'text'  => $DSP->qspan('default', $row['entry_id']),
-												// 	'class' => $style,
-												// 	'width' => '10px;padding-right:24px'
-												// 	 ),
 												array(
 													'text'  => $DSP->qspan('default', "\n<select name=\"reeorder_row_".$row['field']."\" class=\"select\" style=\"width:60px;\" onchange=\"location.href='".BASE.AMP.'C=modules'.AMP.'M=reeorder'.AMP.'P=change_order'.AMP.'weblog_id='.$weblog_id.AMP.'entry_id='.$row['entry_id'].AMP.'order_id=\'+this.value'."\">\n\t".$this->create_drop_menu($ids,$row['field']).$DSP->input_select_footer()),
 													'class' => $style,
 													'width' => '1%;padding:0 13px 0 8px'
 													 ),
-												//array(
-												//	'text'  => $DSP->qspan('defaultBold', $DSP->anchor(BASE.AMP.'C=modules'.AMP.'M=reeorder'.AMP.'P=change_order'.AMP.'weblog_id='.$weblog_id.AMP.'entry_id='.$row['entry_id'].AMP.'order=up', '<img src="'.PATH_CP_IMG.'arrow_up.gif" border="0"  width="16" height="16" alt="" title="" />').'&nbsp;'.$DSP->anchor(BASE.AMP.'C=modules'.AMP.'M=reeorder'.AMP.'P=change_order'.AMP.'weblog_id='.$weblog_id.AMP.'entry_id='.$row['entry_id'].AMP.'order=down', '<img src="'.PATH_CP_IMG.'arrow_down.gif" border="0"  width="16" height="16" alt="" title="" />')),
-												//	'class' => $style,
-												//	'width' => '40px;padding-right:8px'
-												//	 ),
 												array(
 													'text'  => $DSP->qspan('defaultBold', '<img src="'.PATH_CP_IMG.'sort.png" border="0"  width="16" height="16" alt="" title="" />'),
 													'class' => $style.' sort-handle',
