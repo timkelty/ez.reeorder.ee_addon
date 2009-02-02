@@ -4,16 +4,18 @@ INSTALLATION INSTRUCTIONS:
 Log into your ExpressionEngine Control Panel, visit the following page:
 Admin > Utilities > Database Backup, and make that backup!
 
-- Upload the "reeorder" directory and everything inside it to your server and place it in the /system/modules/ directory. You should end up with it located at /system/modules/reeorder/.
+- Upload the system/modules/reeorder folder to system/modules on your server.
 
-- Upload the file named "lang.reeorder.php" to your /system/language/english/ directory on your server. You should end up with it located at /system/language/english/lang.reeorder.php
+- Upload system/language/english/lang.reeorder.php to system/language/english on your server.
+
+- Upload themes/cp_global_images/sort.png to themes/cp_global_images on your server.
 
 - Go to the Modules tab. You will see an entry listed for "REEOrder". On the right side of the table, click the Install link corresponding to the REEOrder Module. This will install the necessary database tables and settings for the module.
 
 - The REEOrder entry is now a clickable link, click it to start using the REEOrder module.
 
 Optionally:
-- Upload the file named "ext.reeorder.php" to your /system/extensions/ directory on your server. You should end up with it located at /system/extensions/ext.reeorder.php
+- Upload system/extensions/ext.reeorder.php to system/extensions on your server.
 
 
 ABOUT THIS MODULE:
@@ -54,3 +56,17 @@ If you change Sort Order to "Ascending" in the module's Preferences, make sure y
 
 Step 6: (optional)
 If you like you can install the additional "REEOrder" Extension, this will remove the Custom Field from the Entry Form. (so your client won't accidentally mess with it).
+
+
+CHANGE LOG
+
+1.0.0:
+- Initial release
+
+1.0.1:
+- Fixed a MySQL error
+
+1.1.0:
+- Brandon Kelly <me@brandon-kelly.com>: Added drag-n-drop sorting (sponsored by Matt Weinberg)
+    - requires CP jQuery (http://www.ngenworks.com/software/ee/cp_jquery/),
+      which is bundled with EE 1.6.6+.

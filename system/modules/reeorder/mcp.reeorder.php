@@ -22,7 +22,7 @@ Purpose: REEOrder Module - CP
 
 class Reeorder_CP {
 
-	var $version = '1.0.1';
+	var $version = '1.1.0';
 	
 	// -------------------------
 	//	Constructor
