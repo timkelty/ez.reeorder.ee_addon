@@ -68,5 +68,4 @@ CHANGE LOG
 
 1.1.0:
 - Brandon Kelly <me@brandon-kelly.com>: Added drag-n-drop sorting (sponsored by Matt Weinberg)
-    - requires CP jQuery (http://www.ngenworks.com/software/ee/cp_jquery/),
-      which is bundled with EE 1.6.6+.
+    - requires CP jQuery (http://www.ngenworks.com/software/ee/cp_jquery/), which comes bundled with EE 1.6.6+.
