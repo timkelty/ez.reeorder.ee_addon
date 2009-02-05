@@ -738,7 +738,10 @@ class Reeorder_CP {
 		// use group_id to get custom field_id
 		$custom_field_id_query = $DB->query("SELECT field_id, field_name, field_label, group_id
 											FROM exp_weblog_fields 
-											WHERE group_id = '$field_group_id'");
+											WHERE group_id = '$field_group_id'
+											OR field_is_gypsy = 'y'
+                      AND gypsy_weblogs
+                      LIKE '% {$weblog_id} %'");
 		
 		$custom_field_id = $DB->query("SELECT * FROM exp_reeorder_prefs WHERE weblog_id = '$weblog_id'");
 		if ($custom_field_id->num_rows == 0)
