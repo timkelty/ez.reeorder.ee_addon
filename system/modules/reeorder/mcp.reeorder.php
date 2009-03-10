@@ -4,9 +4,9 @@
 =====================================================
 REEOrder Module for ExpressionEngine
 -----------------------------------------------------
-Build: 20080627
+Build: 20090301
 -----------------------------------------------------
-Copyright (c) 2005 - 2008 Elwin Zuiderveld
+Copyright (c) 2005 - 2009 Elwin Zuiderveld
 =====================================================
 THIS MODULE IS PROVIDED "AS IS" WITHOUT WARRANTY OF
 ANY KIND OR NATURE, EITHER EXPRESSED OR IMPLIED,
@@ -22,7 +22,7 @@ Purpose: REEOrder Module - CP
 
 class Reeorder_CP {
 
-	var $version = '1.1.0';
+	var $version = '1.2';
 	
 	// -------------------------
 	//	Constructor
@@ -52,6 +52,12 @@ class Reeorder_CP {
 			$this->reeorder_module_update();
 		}
 		// end update
+		
+		// add status field
+		if ($query->row['module_version'] < 1.2)
+		{
+			$DB->query("ALTER TABLE exp_reeorder_prefs ADD COLUMN status TEXT");
+		}
 		
 		if ($switch)
 		{
@@ -92,7 +98,8 @@ class Reeorder_CP {
 											'y')";
 		
 		$sql[] = "CREATE TABLE IF NOT EXISTS `exp_reeorder_prefs` (`weblog_id` INT(4) UNSIGNED NOT NULL, 
-																	`field_id` INT(4) UNSIGNED NOT NULL,
+																	`field_id` INT(4) UNSIGNED NOT NULL, 
+																	`status` TEXT, 
 																	`sort_order` VARCHAR(10) NOT NULL)";
 		
 		foreach ($sql as $query)
@@ -233,24 +240,24 @@ class Reeorder_CP {
 		$i = 0;
 		foreach ($weblog_query->result as $row)
 		{
-			
 			$style = ($i++ % 2) ? 'tableCellOne' : 'tableCellTwo';
 			
-			$DSP->body .= $DSP->table_row(array(
-												array(
-													  'text'  => $DSP->qdiv('default', $row['weblog_id']),
-													  'class' => $style
-													  ),
-												array(
-													  'text'  => $DSP->qdiv('defaultBold', $DSP->anchor(BASE.AMP.'C=modules'.AMP.'M=reeorder'.AMP.'P=list_entries'.AMP.'weblog_id='.$row['weblog_id'], $row['blog_title'])),
-													  'class' => $style
-													  )// ,
-													  //   												array(
-													  //   													  'text'  => $DSP->qdiv('default', $row['blog_name']),
-													  //   													  'class' => $style
-													  //   													  )
-												)
-										  );
+			$field_id = $this->get_field_id($row['weblog_id']);
+			
+			if ($field_id != 'field_id_0' && $field_id != '') {
+			
+				$DSP->body .= $DSP->table_row(array(
+													array(
+														  'text'  => $DSP->qdiv('default', $row['weblog_id']),
+														  'class' => $style
+														  ),
+													array(
+														  'text'  => $DSP->qdiv('defaultBold', $DSP->anchor(BASE.AMP.'C=modules'.AMP.'M=reeorder'.AMP.'P=list_entries'.AMP.'weblog_id='.$row['weblog_id'], $row['blog_title'])),
+														  'class' => $style
+														  )
+													)
+											  );
+			}
 		}
 		
 		// -------------------------------------------------------
@@ -272,16 +279,16 @@ class Reeorder_CP {
 	{
 		//print_r(get_defined_constants()); exit();
 		global $FNS, $IN, $DB, $DSP, $LANG, $PREFS, $SESS;
-
+		
 		// Import the JS
 		if ($js = $DSP->file_open(PATH.'modules/reeorder/jquery.tablednd.js'))
 		{
 			$DSP->initial_body .= '<script type="text/javascript">'
-			                    . NL.$js.NL
-			                    . '</script>'
-			                    . '<style type="text/css">'
-			                    . '.sort-handle { cursor:move; }'
-			                    . '</style>';
+				. NL.$js.NL
+				. '</script>'
+				. '<style type="text/css">'
+				. '.sort-handle { cursor:move; }'
+				. '</style>';
 		}
 		
 		// -------------------------------------------------------
@@ -335,6 +342,10 @@ class Reeorder_CP {
 											array(
 												  'text'  => $LANG->line('head_entry_title'),
 												  'class' => 'tableHeadingAlt'
+												  ),
+											array(
+												  'text'  => $LANG->line('head_status'),
+												  'class' => 'tableHeadingAlt'
 												  )
 											)
 									  );
@@ -360,11 +371,43 @@ class Reeorder_CP {
 			$sort = $pref_query->row['sort_order'];
 		}
 		
-		$entry_query = $DB->query("SELECT wt.entry_id, wt.title, wd.$field_id as field
-									FROM exp_weblog_titles wt, exp_weblog_data wd
-									WHERE wt.entry_id = wd.entry_id 
-									AND wt.weblog_id = '$weblog_id' 
-									ORDER BY wd.$field_id $sort");
+		$selected_statuses_query = $DB->query("SELECT status 
+									FROM exp_reeorder_prefs 
+									WHERE weblog_id = $weblog_id");
+		
+		$selected_statuses = '';
+		if ($selected_statuses_query->num_rows > 0)
+		{
+			$selected_statuses = $selected_statuses_query->row['status'];
+		}
+		
+		// safety measure if status was deleted
+		if($selected_statuses == '') {
+			$selected_statuses = '0';
+		}
+		
+		$status_query = $DB->query("SELECT status FROM exp_statuses WHERE status_id IN (".$selected_statuses.")");
+		
+		$sql= "SELECT wt.entry_id, wt.title, wd.$field_id as field, wt.status AS status 
+				FROM exp_weblog_titles wt, exp_weblog_data wd 
+				WHERE wt.entry_id = wd.entry_id 
+				AND wt.weblog_id = $weblog_id ";
+		
+		// add selected status if any
+		if ($status_query->num_rows > 0)
+		{
+			$stats = "''";
+			foreach ($status_query->result as $stat_row)
+			{
+				$stats .= ",'".$stat_row['status']."'";
+			}
+			
+			$sql .= "AND wt.status IN ($stats) ";
+		}
+		
+		$sql .= "ORDER BY wd.$field_id $sort";
+		
+		$entry_query = $DB->query($sql);
 		
 		$ids = array();
 		foreach ($entry_query->result as $row) {
@@ -389,6 +432,10 @@ class Reeorder_CP {
 													 ),
 												array(
 													'text'  => $DSP->qspan('defaultBold', $row['title']),
+													'class' => $style
+													 ),
+												array(
+													'text'  => $DSP->qspan('default', $row['status']),
 													'class' => $style
 													 )
 												)
@@ -422,8 +469,25 @@ class Reeorder_CP {
 		// Return Location
 		$return = BASE.AMP.'C=modules'.AMP.'M=reeorder'.AMP.'P=list_entries'.AMP.'weblog_id='.$IN->GBL('weblog_id');
 		
+		$selected_statuses_query = $DB->query("SELECT status 
+									FROM exp_reeorder_prefs 
+									WHERE weblog_id = $weblog_id");
+		
+		$selected_statuses = '';
+		if ($selected_statuses_query->num_rows > 0)
+		{
+			$selected_statuses = $selected_statuses_query->row['status'];
+		}
+		
+		// safety measure if status was deleted
+		if($selected_statuses == '') {
+			$selected_statuses = '0';
+		}
+		
+		$status_query = $DB->query("SELECT status FROM exp_statuses WHERE status_id IN ($selected_statuses)");
+		
 		// sort depends on preferences
-		$pref_query = $DB->query("SELECT sort_order FROM exp_reeorder_prefs WHERE weblog_id = '$weblog_id'");
+		$pref_query = $DB->query("SELECT sort_order FROM exp_reeorder_prefs WHERE weblog_id = $weblog_id");
 		
 		if ($pref_query->num_rows == 0)
 		{
@@ -432,10 +496,28 @@ class Reeorder_CP {
 			$sort = $pref_query->row['sort_order'];
 		}
 		
-		$entries_query = $DB->query("SELECT entry_id, $field_id 
-									FROM exp_weblog_data 
-									WHERE weblog_id = '".$IN->GBL('weblog_id')."' 
-									ORDER BY $field_id $sort");
+		// only update entries with the correct status
+		$sql = "SELECT wd.entry_id, $field_id, status 
+				FROM exp_weblog_data wd
+				JOIN exp_weblog_titles wt ON wt.entry_id = wd.entry_id 
+				WHERE wd.weblog_id = '".$IN->GBL('weblog_id')."' ";
+				
+		
+		// add selected status if any
+		if ($status_query->num_rows > 0)
+		{
+			$stats = "''";
+			foreach ($status_query->result as $stat_row)
+			{
+				$stats .= ",'".$stat_row['status']."'";
+			}
+			
+			$sql .= "AND status IN ($stats) ";
+		}
+		
+		$sql .= "ORDER BY $field_id $sort";
+		
+		$entries_query = $DB->query($sql);
 		
 		if ($entries_query->row['entry_id'] == $IN->GBL('entry_id') && $IN->GBL('order') != 'down' && !$IN->GBL('order_id'))
 		{
@@ -544,22 +626,27 @@ class Reeorder_CP {
 											array(
 												  'text'  => $LANG->line('weblog_id'),
 												  'class' => 'tableHeadingAlt',
-												  'width' => '1%'
+												  'width' => '1%;'
 												  ),
 											array(
 												  'text'  =>  ucwords($PREFS->ini('weblog_nomenclature')) . $LANG->line('weblog_name'),
 												  'class' => 'tableHeadingAlt',
-												  'width' => '33%'
+												  'width' => '25%'
 												  ),
   											array(
   												  'text'  => $LANG->line('custom_field'),
   												  'class' => 'tableHeadingAlt',
-  												  'width' => '33%'
+  												  'width' => '25%'
   												  ),
+											array(
+												  'text'  => $LANG->line('status'),
+												  'class' => 'tableHeadingAlt',
+												  'width' => '25%'
+												  ),
 											array(
 												  'text'  => $LANG->line('sort_order'),
 												  'class' => 'tableHeadingAlt',
-												  'width' => '33%'
+												  'width' => '25%'
 												  )
 											)
 									  );
@@ -575,12 +662,46 @@ class Reeorder_CP {
 		// Declare Form
 		// -------------------------------------------------------
 		
-		$weblog_query = $DB->query("SELECT weblog_id, blog_name, blog_title FROM exp_weblogs WHERE weblog_id IN ('".implode("','", $assigned_weblogs)."')");
+		$weblog_query = $DB->query("SELECT weblog_id, blog_name, blog_title, status_group FROM exp_weblogs WHERE weblog_id IN ('".implode("','", $assigned_weblogs)."')");
 		
 		$i = 0;
 		foreach ($weblog_query->result as $row)
 		{
 			$weblog_id = $row['weblog_id'];
+			$status_group = $row['status_group'];
+			
+			$status_query = $DB->query("SELECT status_id, status 
+										FROM exp_statuses 
+										WHERE group_id = $status_group 
+										ORDER BY status_order");
+			
+			$selected_statuses_query = $DB->query("SELECT status 
+										FROM exp_reeorder_prefs 
+										WHERE weblog_id = $weblog_id");
+			
+			$selected_statuses = '';
+			if ($selected_statuses_query->num_rows > 0)
+			{
+				$selected_statuses = $selected_statuses_query->row['status'];
+			}
+			
+			// safety measure if status was deleted
+			if($selected_statuses == '') {
+				$selected_statuses = '0';
+			}
+			
+			$status_selections = explode(',',$selected_statuses);
+			
+			$statuses = '';
+			foreach ($status_query->result as $stat_row)
+			{
+				$selected = 0;
+				if (in_array($stat_row['status_id'], $status_selections))
+				{
+					$selected = 1;
+				}
+				$statuses .= '<label>'.$DSP->input_checkbox('status_'.$row['weblog_id'].'[]', $stat_row['status_id'], $selected).NBS.$stat_row['status'].'</label><br />';
+			}
 			
 			$style = ($i++ % 2) ? 'tableCellOne' : 'tableCellTwo';
 			
@@ -595,6 +716,11 @@ class Reeorder_CP {
 													  ),
   													array(
 													  'text'  => $DSP->qdiv('default', "<select name=\"reeorder_row_".$row['weblog_id']."\" class=\"select\" style=\"width: 175px;\" onchange=\"if(this.selectedIndex != 0)confirm('".$LANG->line('selected_field_warning_1'). "\\n" .$LANG->line('selected_field_warning_2')."');\">\n\t".$this->create_custom_field_menu($row['weblog_id']).$DSP->input_select_footer()),
+													  'class' => $style,
+													  'width' => 'auto;padding-top:0;padding-bottom:0'
+													  ),
+												array(
+													  'text'  => $DSP->qdiv('default', $statuses),
 													  'class' => $style,
 													  'width' => 'auto;padding-top:0;padding-bottom:0'
 													  ),
@@ -636,21 +762,21 @@ class Reeorder_CP {
 		// only fetch weblogs assigned to current user
 		$assigned_weblogs = $FNS->fetch_assigned_weblogs();
 		
-		$DB->query("DELETE FROM exp_reeorder_prefs");
-		
 		$data = array();
 		foreach ($assigned_weblogs as $val)
 		{
 			$data['weblog_id'] = $val;
 			$data['field_id'] = $_POST['reeorder_row_'.$val];
+			if (isset($_POST['status_'.$val])) {
+				$data['status'] = implode(',',$_POST['status_'.$val]);
+			}
 			$data['sort_order'] = $_POST['sort_order_'.$val];
+			$DB->query("DELETE FROM exp_reeorder_prefs WHERE weblog_id = '".$val."' ");
 			$DB->query($DB->insert_string('exp_reeorder_prefs', $data));
 		}
 		
 		return $this->preferences($LANG->line('prefs_updated'));
 	}
-	
-	
 	//--------------------------------------
 	// Get Sort Order
 	//--------------------------------------
@@ -738,10 +864,7 @@ class Reeorder_CP {
 		// use group_id to get custom field_id
 		$custom_field_id_query = $DB->query("SELECT field_id, field_name, field_label, group_id
 											FROM exp_weblog_fields 
-											WHERE group_id = '$field_group_id'
-											OR field_is_gypsy = 'y'
-                      AND gypsy_weblogs
-                      LIKE '% {$weblog_id} %'");
+											WHERE group_id = '$field_group_id'");
 		
 		$custom_field_id = $DB->query("SELECT * FROM exp_reeorder_prefs WHERE weblog_id = '$weblog_id'");
 		if ($custom_field_id->num_rows == 0)

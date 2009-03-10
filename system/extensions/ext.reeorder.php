@@ -4,7 +4,7 @@
 //   "REEOrder" Extension
 //   using 'show_full_control_panel_end' hook
 //   'cp.display.php' (EE 1.5.2)
-//   Build: 20080627
+//   Build: 20090301
 //   author: Elwin Zuiderveld
 //------------------------------------
 

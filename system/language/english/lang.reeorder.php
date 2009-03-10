@@ -4,7 +4,7 @@
 =====================================================
 REEOrder Module for ExpressionEngine
 -----------------------------------------------------
-Build: 20080627
+Build: 20090301
 -----------------------------------------------------
 Copyright (c) 2005 - 2008 Elwin Zuiderveld
 =====================================================
@@ -56,11 +56,17 @@ $L = array(
 "head_order" =>
 "Order",
 
+"head_status" =>
+"Status",
+
 "custom_field" =>
 "Custom Field",
 
 "sort_order" =>
 "Sort Order",
+
+"status" =>
+"Status",
 
 // titles
 "ttl_reeorder" =>
@@ -81,7 +87,7 @@ $L = array(
 "You are not authorized to access this page",
 
 "link_documentation" =>
-"<a href=\"http://docs.elwinzuiderveld.com/\" target=\"_blank\">Documentation</a>",
+"<a href=\"http://docs.elwinzuiderveld.nl/\" target=\"_blank\">Documentation</a>",
 
 "preferences" =>
 "Preferences",
