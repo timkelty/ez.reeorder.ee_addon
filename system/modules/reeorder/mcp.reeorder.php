@@ -862,10 +862,22 @@ class Reeorder_CP {
 		$field_group_id = $field_group_query->row['field_group'];
 		
 		// use group_id to get custom field_id
-	  $custom_field_id_query = $DB->query("SELECT field_id, field_name, field_label, group_id
-											FROM exp_weblog_fields 
-											WHERE group_id = '$field_group_id'");
+		$gypsy_columns_query = $DB->query("SHOW COLUMNS FROM exp_weblog_fields LIKE '%gypsy%'");
+    if ($gypsy_columns_query->num_rows > 0) {
+      $custom_field_id_query = $DB->query("SELECT field_id, field_name, field_label, group_id
+  											FROM exp_weblog_fields 
+  											WHERE group_id = '$field_group_id'
+  											OR field_is_gypsy = 'y'
+                        AND gypsy_weblogs
+                        LIKE '% {$weblog_id} %'");
+    }
+		else {
+      $custom_field_id_query = $DB->query("SELECT field_id, field_name, field_label, group_id
+                           FROM exp_weblog_fields 
+                           WHERE group_id = '$field_group_id'");
+		}
 		
+
 		$custom_field_id = $DB->query("SELECT * FROM exp_reeorder_prefs WHERE weblog_id = '$weblog_id'");
 		if ($custom_field_id->num_rows == 0)
 		{
