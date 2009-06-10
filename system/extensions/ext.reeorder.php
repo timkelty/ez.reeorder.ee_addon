@@ -144,11 +144,17 @@ class REEOrder
 		{
 			$field_id = $this->get_field_id();
 			
+	
 			$js = <<<JS
 			<!-- 'REEOrder' Extension script -->
 			<script type="text/javascript">
 			//<![CDATA[
-			document.getElementById('field_pane_off_{$field_id}').parentNode.style.display='none';
+        // hide multi-select box
+      	// CHANGED: Fusionary: check for existence of #categorytree first
+      	if (document.getElementById && document.getElementById('field_pane_off_{$field_id}')){
+      	  document.getElementById('asdfasdfasdfasdf').style.display='none';
+      	};
+      	
 			//]]>
 			</script>
 			<!-- END -->
