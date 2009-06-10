@@ -862,7 +862,7 @@ class Reeorder_CP {
 		$field_group_id = $field_group_query->row['field_group'];
 		
 		// use group_id to get custom field_id
-		$custom_field_id_query = $DB->query("SELECT field_id, field_name, field_label, group_id
+	  $custom_field_id_query = $DB->query("SELECT field_id, field_name, field_label, group_id
 											FROM exp_weblog_fields 
 											WHERE group_id = '$field_group_id'");
 		
