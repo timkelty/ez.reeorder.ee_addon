@@ -106,65 +106,58 @@ class REEOrder
 	}
 	// END
 	
-	//--------------------------------------
-	// Get ID of 'reeorder_module' field
-	//--------------------------------------
-	
-	function get_field_id()
-	{
-		global $DB, $IN, $DSP, $LANG;
-		
-		$weblog_id = $IN->GBL('weblog_id');
-		$custom_field_id_query = $DB->query("SELECT * FROM exp_reeorder_prefs WHERE weblog_id = '$weblog_id'");
-		
-		if ($custom_field_id_query->num_rows == 0)
-		{
-			return;
-		}
-		
-		return $custom_field_id_query->row['field_id'];
-	}
-	// END
-	
-	//------------------------------------
-	//   Hide Custom Field
-	//------------------------------------
-	
-	function hide_field($out)
-	{
-		global $IN, $EXT, $DSP, $SESS;
-		
-		// This variable will return whatever the last extension returned to this hook
-		if($EXT->last_call !== false)
-		{
-			$out = $EXT->last_call;
-		}
-		
-		if ($IN->GBL('M') == 'edit_entry' || $IN->GBL('M') == 'entry_form' || $IN->GBL('M') == 'new_entry')
-		{
-			$field_id = $this->get_field_id();
-			
-	
-			$js = <<<JS
-			<!-- 'REEOrder' Extension script -->
-			<script type="text/javascript">
-			//<![CDATA[
-        // hide multi-select box
-      	// CHANGED: Fusionary: check for existence of #categorytree first
-      	if (document.getElementById && document.getElementById('field_pane_off_{$field_id}')){
-      	  document.getElementById('asdfasdfasdfasdf').style.display='none';
-      	};
-      	
-			//]]>
-			</script>
-			<!-- END -->
-JS;
-			$out = str_replace('</body>', $js."\n\n</body>", $out);
-		}
-		
-		return $out;
-	}
-	// END
-	
+  //--------------------------------------
+  // Get ID of 'reeorder_module' field
+  //--------------------------------------
+
+  function get_field_id()
+  {
+      global $DB, $IN;
+
+      $weblog_id = $IN->GBL('weblog_id');
+      $custom_field_id_query = $DB->query("SELECT field_id FROM exp_reeorder_prefs WHERE weblog_id = '$weblog_id'");
+
+      if ($custom_field_id_query->row['field_id'] != 0)
+      {
+          return $custom_field_id_query->row['field_id'];
+      }
+      else
+      {
+          return FALSE;
+      }
+
+  }
+  // END
+
+  //------------------------------------
+  //   Hide Custom Field
+  //------------------------------------
+
+  function hide_field($out)
+  {
+      global $IN, $EXT, $DSP, $SESS;
+
+      // This variable will return whatever the last extension returned to this hook
+      if($EXT->last_call !== false)
+      {
+          $out = $EXT->last_call;
+      }
+
+      if ($IN->GBL('M') == ('edit_entry' || 'entry_form' || 'new_entry') && $this->get_field_id() !== FALSE)
+      {
+          $find = '</head>';  
+          $replace = '
+          <!-- REEOrder Extension script -->
+          <script type="text/javascript">
+          $(document).ready(function(){$("div.publishRows:has(div#field_pane_off_'.$this->get_field_id().')").hide();});
+          </script>
+          <!-- END -->
+          ';
+          $out = str_replace($find, $replace, $out);
+      }
+
+      return $out;
+  }
+  // END	
 }
 ?>
