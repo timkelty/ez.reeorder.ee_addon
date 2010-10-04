@@ -23,6 +23,7 @@ Purpose: REEOrder Module - CP
 class Reeorder_CP {
 
 	var $version = '1.2';
+	var $field_general_settings = array();
 	
 	// -------------------------
 	//	Constructor
@@ -30,7 +31,7 @@ class Reeorder_CP {
 	
 	function Reeorder_CP($switch = TRUE)
 	{
-		global $IN, $DB;
+		global $IN, $DB, $EXT, $PREFS;
 		
 		// Is Module installed?
 		if ($IN->GBL('M') == 'INST')
@@ -59,6 +60,21 @@ class Reeorder_CP {
 			$DB->query("ALTER TABLE exp_reeorder_prefs ADD COLUMN status TEXT");
 		}
 		
+    // get field general settings
+    if (isset($EXT->version_numbers['Field_general_ext']) !== FALSE) {
+      
+      $site_id = $PREFS->ini('site_id');                  
+      
+     $field_general_query = $DB->query("SELECT settings
+                           FROM exp_extensions 
+                           WHERE class = 'Field_general_ext'
+                        AND enabled = 'y'
+                        AND method = '_get_fields'");
+    
+      $this->field_general_settings = unserialize($field_general_query->row['settings']);
+      $this->field_general_settings = $this->field_general_settings[$site_id]; 
+    }
+    
 		if ($switch)
 		{
 			switch($IN->GBL('P'))
@@ -861,22 +877,40 @@ class Reeorder_CP {
 		
 		$field_group_id = $field_group_query->row['field_group'];
 		
-		// use group_id to get custom field_id
-		$gypsy_columns_query = $DB->query("SHOW COLUMNS FROM exp_weblog_fields LIKE '%gypsy%'");
-    if ($gypsy_columns_query->num_rows > 0) {
-      $custom_field_id_query = $DB->query("SELECT field_id, field_name, field_label, group_id
-  											FROM exp_weblog_fields 
-  											WHERE group_id = '$field_group_id'
-  											OR field_is_gypsy = 'y'
-                        AND gypsy_weblogs
-                        LIKE '% {$weblog_id} %'");
-    }
-		else {
-      $custom_field_id_query = $DB->query("SELECT field_id, field_name, field_label, group_id
-                           FROM exp_weblog_fields 
-                           WHERE group_id = '$field_group_id'");
-		}
+		$fg_settings = $this->field_general_settings;		
 		
+		$field_sql = 'SELECT *
+											FROM exp_weblog_fields 
+											WHERE group_id';
+		
+    // field general fields or assined field group
+		if (!empty($fg_settings))
+    {
+      $groups = $fg_settings['weblogs'][$weblog_id]['field_groups'];
+      // build string
+      foreach($groups as $gk => $gv)
+      {
+        if ($gv['active'] == 'y')
+        {
+          $groups_filtered[$gk] = $gv;
+        }
+      }
+      $groups_str = !empty($groups_filtered) ? implode(',', array_keys($groups_filtered)) : '\'\'';
+
+      $field_sql .= ' IN (' . $groups_str . ')';      
+    }
+    else {
+      $field_sql .= '= '. $field_group_id;
+    }
+    
+    // gypsy fields
+    $gypsy_columns_query = $DB->query("SHOW COLUMNS FROM exp_weblog_fields LIKE '%gypsy%'");
+    if ($gypsy_columns_query->num_rows > 0) {
+      $field_sql .= ' OR field_is_gypsy = \'y\'
+      AND gypsy_weblogs
+      LIKE \'%' . $weblog_id . '%\'';
+    }
+		$custom_field_id_query = $DB->query($field_sql);
 
 		$custom_field_id = $DB->query("SELECT * FROM exp_reeorder_prefs WHERE weblog_id = '$weblog_id'");
 		if ($custom_field_id->num_rows == 0)
